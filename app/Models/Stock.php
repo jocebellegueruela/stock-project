@@ -25,4 +25,8 @@ class Stock extends Model
     public function stock_category(){
         return $this->belongsTo(StockCategory::class);
     }
+
+    public function uom(){
+        return $this->belongsTo(Uom::class);
+    }
 }

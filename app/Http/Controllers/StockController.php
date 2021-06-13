@@ -7,6 +7,7 @@ use Inertia\Inertia;
 use App\Models\StockCategory;
 use App\Models\Uom;
 use App\Models\Stock;
+use Illuminate\Support\Facades\Redirect;
 
 class StockController extends Controller
 {
@@ -17,7 +18,11 @@ class StockController extends Controller
      */
     public function index()
     {
-        //
+        //retrieve all records
+        $stocks = Stock::with(['stock_category', 'uom'])->latest()->get();
+
+        //then display using the Index view
+        return Inertia::render('Stocks/Index', compact('stocks'));
     }
 
     /**
@@ -69,7 +74,12 @@ class StockController extends Controller
      */
     public function show($id)
     {
-        //
+        $model = Stock::find($id);
+        
+        $categories = StockCategory::get();
+        $uoms = Uom::get();
+
+        return Inertia::render('Stocks/View', compact('model', 'categories', 'uoms'));
     }
 
     /**
@@ -92,7 +102,23 @@ class StockController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $validatedData = $request->validate(
+
+            [
+                'stock_category_id' => 'exists:stock_categories,id',
+                'description' => 'required',
+                'uom' => 'exists:uoms,id',
+                'barcode' => 'string',
+                'discontinued' => 'required|boolean',
+            ]
+
+        );
+
+        Stock::findOrFail($id)->update(array_merge($validatedData, [
+            'discontinued' => request()->boolean('discontinued') ? 'Y' : 'N'
+        ]));
+
+        return Redirect::route('stock.index')->with("Success", "Stock Updated");
     }
 
     /**
@@ -103,6 +129,8 @@ class StockController extends Controller
      */
     public function destroy($id)
     {
-        //
+        Stock::findOrFail($id)->delete();
+
+        return Redirect::route('stock.index')->with('success', 'Stock Category deleted.');
     }
 }
